@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html ng-app="app">
+  <head>
+    <title><%= title %></title>
+	<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css' />
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://code.angularjs.org/1.4.5/angular.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular-resource.min.js"></script>
+	<script src="/js/angularmodal.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  </head>
+  <body ng-controller="BillController">
+	<nav class="navbar navbar-default">
+        <div class="navbar-header">
+            <button type="button" data-target="#navbarCollapse" data-toggle="collapse" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="#" class="navbar-brand">Manikanta Allada</a>
+        </div>
+        <div id="navbarCollapse" class="collapse navbar-collapse">
+            <ul class="nav navbar-nav navbar-right">
+                <li class="active"><a href="#">Billing</a></li>
+                <li><a href="/sales">Sales</a></li>
+            </ul>
+        </div>
+    </nav>
+    <div modal="showModal" id="addbill" style="background-color:#fff;">
+		<div class="modal-header">
+			<p> Add new Bill </p>
+		</div>
+		<div class="modal-body" >
+			<form class="form-horizontal" role="form" name="billing" ng-submit="billing.$valid && save()">
+				<div class="form-group">
+					<label for="name" class="col-sm-2 control-label">Customer Name</label>
+					<div class="col-sm-10">
+						<input type="text" ng-model="bill.name" name="customername" class="form-control" id="name" placeholder="CustomerName" required/>
+						<span ng-show="billing.$dirty && billing.customername.$error.required">Please Enter Customer name.</span>
+					</div>
+				</div>
+				<div class="form-group">
+					<span ng-repeat="item in bill.items">
+						<label for="itemname" class="col-sm-2 control-label">Item name</label>
+						<div class="col-sm-2">
+							<input type="text" ng-model="item.itemname" name="itemname" class="form-control" id="itemname" placeholder="Enter name of the item" required/>
+							<span ng-show="billing.$dirty && billing.itemname.$error.required">Please Enter Item name.</span>
+						</div>
+						<label for="quantity" class="col-sm-2 control-label">Item Quantity</label>
+						<div class="col-sm-2">
+							<input type="number" ng-model="item.itemquantity" ng-blur="calculatetotal()" name="itemquantity" class="form-control" id="quantity" placeholder="Enter quantity of the item" required/>
+							<span ng-show="billing.$dirty && billing.itemquantity.$error.required">Please Enter Quantity.</span>
+						</div>
+						<label for="price" class="col-sm-2 control-label">Item Price</label>
+						<div class="col-sm-2">
+							<input type="number" ng-model="item.itemprice"  ng-blur="calculatetotal()" name="itemprice" class="form-control" id="price" placeholder="Enter price of the item" required/>
+							<span ng-show="billing.$dirty && billing.itemprice.$error.required">Please Enter Item price.</span>
+						</div>
+					</span>
+				</div>
+				<div class="form-group">
+					<label for="discount" class="col-sm-2 control-label">Discount(%)</label>
+					<div class="col-sm-10">
+						<input type="number" ng-model="bill.discount" ng-blur="calculatetotal()" name="discount" class="form-control" id="discount" placeholder="Applicable discount"/>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="tax" class="col-sm-2 control-label">GST(%)</label>
+					<div class="col-sm-10">
+						<input type="number" ng-model="bill.tax" class="form-control" id="tax" placeholder="GST"  disabled="disabled"/>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="total" class="col-sm-2 control-label">Total</label>
+					<div class="col-sm-10">
+						<input type="number" ng-model="bill.total" class="form-control" id="total" placeholder="totalbill" disabled="disabled"/>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="salesman" class="col-sm-2 control-label">Salesman Name</label>
+					<div class="col-sm-10">
+						<input type="text" ng-model="bill.salesman" class="form-control" id="salesman" placeholder="salesman name"/>
+					</div>
+				</div>
+				<div class="form-group modal-footer">
+					<div class="col-sm-offset-2 col-sm-10">
+						<span ng-show="createbill">
+							<input type="submit" class="btn btn-primary" value="Save"/>
+						</span>
+						<span ng-show="updatebill">
+							<button type="button" class="btn" ng-click="update()">Update</button>
+						</span>
+						<button type="button" class="btn" ng-click="cancel()">Back</button>
+						<button type="button" class="btn" ng-click="additem()">Add item</button>
+					</div>
+				</div>
+			</form>
+		</div>
+    </div>
+	<div class="container">
+		<div class="row">
+				<div class="col-sm-12 col-md-12 panel panel-default" style="background-color:#eef2f3;min-height:40px;">
+					<div class="col-md-6 col-sm-6 col-xs-6">
+						<p style="padding-top: 8px;padding-bottom: 1px;"><b>Billing Information</b></p>
+					</div>
+					<div class="col-md-6 col-sm-6 col-xs-6" style="color: #fff;">
+						<button class="btn btn-sm" style="float:right;background-color: green;margin-top:4px;" ng-click="addbill()">Add new bill</button>
+					</div>
+				</div>
+		</div>
+		<div class="row">
+			<div class="panel-group" id="accordion">
+				<div class="panel panel-default" ng-repeat="blist in billslist">
+					<div class="panel-heading">
+						<span>Customer Name: <b>{{blist.name}}</b></span>
+						<div class="pull-right">
+						 <button type="button" class="btn btn-default btn-sm" ng-click="editbill($index)">
+						  <span class="glyphicon glyphicon-edit"></span> Edit
+						</button>
+						 <button type="button" class="btn btn-default btn-sm" ng-click="deletebill($index)">
+						  <span class="glyphicon glyphicon-trash"></span> Delete 
+						</button>
+						<a data-toggle="collapse" data-parent="#accordion" data-target="#bill-{{$index}}" >Get details</a>
+						</div>
+					  </h5>
+					</div>
+					<div id="bill-{{$index}}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading-{{$index}}">
+					  <div class="panel-body">
+						<table class="table table-striped">
+							<thead>
+								<tr>
+									<th>Itemname</th>
+									<th>Itemprice</th>
+									<th>Itemquantity</th>
+									<th>Discount</th>
+									<th>GST</th>
+									<th>Total</th>
+								</tr>
+							</thead>
+							<tr ng-repeat="itemdetails in blist.items">
+								<td>{{itemdetails.itemname}}</td>
+								<td>{{itemdetails.itemprice}}</td>
+								<td>{{itemdetails.itemquantity}}</td>
+							</tr>
+							<tr>
+								<td><b>Discount</b></td>
+								<td></td>
+								<td></td>
+								<td>{{blist.discount}}</td>
+							</tr>
+							<tr>
+								<td><b>GST</b></td>
+								<td></td>
+								<td></td>
+								<td></td>
+								<td>{{blist.tax}}</td>
+							</tr>
+							<tr>
+								<td><b>Total</b></td>
+								<td></td>
+								<td></td>
+								<td></td>
+								<td></td>
+								<td>{{blist.total}}</td>
+							</tr>
+						<table>
+					  </div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+    <script>
+		var app = angular.module('app',['ngResource','ui.bootstrap.modal'])
+			app.factory('Bills', ['$resource', function($resource){
+			  return $resource('/api/bills/:id', null, {
+				'update': { method:'PUT' }
+			  },{
+				stripTrailingSlashes: false
+				});
+			}]);
+			app.controller('BillController',['$scope','Bills','$window',function($scope,Bills,$window) {
+				//$scope.editing = [];
+				$scope.billslist = Bills.query(function(){});
+				console.log($scope.billslist);
+				$scope.bill = new Bills();
+				$scope.bill.items = [
+					{
+						"itemname": "",
+						"itemquantity": "",
+						"itemprice": ""
+					}
+				];
+				$scope.save = function(){
+					$scope.bill.tax = 5;
+					var bill = new Bills(
+						{ 
+						  name: $scope.bill.name,
+						  items: $scope.bill.items,
+						  discount: $scope.bill.discount,
+						  tax: $scope.bill.tax,
+						  total: $scope.bill.total,
+						  salesman: $scope.bill.salesman
+						}
+					);
+					bill.$save(function(){
+					  $scope.bill.name = "";
+					  $scope.bill.items = [{
+							"itemname": "",
+							"itemquantity": "",
+							"itemprice": ""
+						}];
+						$scope.bill.discount = "";
+						$scope.bill.total = "";
+						$scope.bill.salesman = "";
+					    $scope.billing.$setPristine();
+						$window.location.href = '';
+					});
+				};
+				$scope.addbill = function(){
+					$scope.showModal = true;
+					 $scope.bill ={};
+					  $scope.bill.items = [{
+							"itemname": "",
+							"itemquantity": "",
+							"itemprice": ""
+						}];
+					  $scope.billing.$setPristine();
+					$scope.createbill = true;
+					$scope.updatebill = false;
+					$scope.bill.tax = 5;
+				};
+				$scope.deletebill = function(index){
+					  var sbill = $scope.billslist[index];
+					  Bills.remove({id: sbill._id}, function(){
+						$scope.billslist.splice(index, 1);
+					  });
+				}
+				$scope.editbill = function(index){
+					 var sbill = $scope.billslist[index];
+					 $scope.createbill = false;
+					  $scope.updatebill = true;
+					 $scope.showModal = true;
+					 $scope.bill = sbill;
+					 $scope.editingindex = index;
+				}
+				$scope.update = function(){
+					$scope.billslist[$scope.editingindex] =  $scope.bill;
+					 var sbill = $scope.billslist[$scope.editingindex];
+					 Bills.update({id: sbill._id}, sbill)
+					 .$promise.then(function (response) {
+						$scope.showModal = false;
+						$scope.editingindex = '';
+						$window.location.href = '';
+					});
+				}
+				$scope.calculatetotal = function(){
+					var billtotal = 0;
+					var taxtotal = 0;
+					angular.forEach($scope.bill.items, function(data){
+						if(data.itemprice == undefined || data.itemprice == "null"){
+							data.itemprice = 0;
+						}
+						if(data.itemquantity == undefined || data.itemquantity == "null"){
+							data.itemquantity = 0;
+						}
+						billtotal += Math.abs(data.itemquantity) * Math.abs(data.itemprice);
+					});
+					console.log("billtotal"+billtotal);
+					taxtotal = billtotal+(billtotal*$scope.bill.tax/100);
+					console.log("taxtotal"+taxtotal);
+					console.log("beforediscount"+$scope.bill.discount);
+					if($scope.bill.discount == undefined || $scope.bill.discount == "null"){
+						console.log("Insidediscount"+$scope.bill.discount);
+						var finaltotal = taxtotal;
+					}else{
+						console.log("elsediscount"+$scope.bill.discount);
+						var finaltotal = taxtotal - (taxtotal*$scope.bill.discount/100);
+						if(finaltotal<0){
+							finaltotal = 0;
+						}
+					}
+					console.log("total"+finaltotal);
+					$scope.bill.total = finaltotal;
+				}
+				$scope.cancel = function() {
+					$scope.showModal = false;
+				};
+				$scope.additem = function(){
+					$scope.bill.items.push({ 
+						"itemname": "",
+						"itemquantity": "",
+						"itemprice": ""
+					});
+				}
+			}]);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,78 @@
+<html>
+<!DOCTYPE html>
+  <head>
+    <title><%= title %></title>
+	<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css' />
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment.min.js"></script>
+   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+   <script type="text/javascript">
+     google.charts.load('current', {packages: ['corechart', 'bar']});  
+   </script>
+</head>
+<body>
+<nav class="navbar navbar-default">
+        <div class="navbar-header">
+            <button type="button" data-target="#navbarCollapse" data-toggle="collapse" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="#" class="navbar-brand">Manikanta Allada</a>
+        </div>
+        <div id="navbarCollapse" class="collapse navbar-collapse">
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="/">Billing</a></li>
+                <li class="active" ><a href="/sales">Sales</a></li>
+            </ul>
+        </div>
+    </nav>
+<div id="container" style="width: 550px; height: 400px; margin: 0 auto"></div>
+<script language="JavaScript">
+function drawChart() {
+	var total = 0;
+	var rowsdata = [];
+   $.ajax({
+        url: "/api/bills",
+        type: 'GET',
+        dataType: 'json', // added data type
+        success: function(res) {
+            console.log(res);
+			$.each(res, function(i, item) {
+			    //var dat = moment(item.created).format("YYYY-MM-DD");
+				var dat = item.created.slice(0,10)
+				if(item.total== undefined || item.total== "null"){
+					item.total = 0;
+				}
+				var row = [new Date(dat),item.total];
+				rowsdata.push(row);
+				total = total+item.total;
+				console.log("row"+rowsdata);
+			});
+				console.log("total"+total);
+				var data = new google.visualization.DataTable();
+				data.addColumn('date','Date sold');
+				data.addColumn('number','sale');
+				data.addRows(rowsdata);
+				// Set chart options
+				var options = {
+					'title':'Total sales - '+ total,
+					hAxis: {
+						title: 'Day of sale'
+					},
+					vAxis: {
+						title: 'Sale happened',
+					}
+				};
+
+			   // Instantiate and draw the chart.
+			   var chart = new google.visualization.ColumnChart(document.getElementById('container'));
+			   chart.draw(data, options);
+        }
+    });
+}
+google.charts.setOnLoadCallback(drawChart);
+</script>
+</body>
+</html>
